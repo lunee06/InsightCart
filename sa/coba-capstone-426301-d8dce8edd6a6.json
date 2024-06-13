@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "coba-capstone-426301",
+  "private_key_id": "d8dce8edd6a66268d4710f8a531227d68b3bd621",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDcmVbODiBqhaYV\nJqmX4KXrhm/UOGAnTXR/jfFuTI5UhohteJ0raYJWa5vEKAVO5J4o7PYrHIqebw2C\nrRchoYz+RrWHyvFsWp/SWeQN/VTGJHfJkTcOIXaZBJ7TKIses4WtsUNiYVrEjbZw\nSx5YueX5Mh3XYylJaJtQIyJc01yxxjjFBJJki8lN46aNf8pb/fM52zgCJ/zP0Wrn\nKvCaLbkw+m+yCkB0zX2/r3jJUhf5reX9Psr6aFRyl6FrJPJjEDCMzWNUhiKJ7Kpa\ncQm+xHtvThgnlASwoHJEvujyybadKNCVnF1Gt3FS2zQiSLdvxkCYXo+1XodXrHjw\n6+SkO4hnAgMBAAECggEASJwyTc2pjtZh5dldfi/D/UO5YGWUBKvCek+61Z7eRGUp\n17qZJRZr/80YrtardJ3cj0T7/BG/cMnF7SrTD89QjMuyabl7gLpNm9vZrF8jvbp4\nMUEamYybMF+sdX2FWTwm9pZ/wwyfZ03r7IdVPEgoMb90whYSG2cSpCyEXYB2pM6o\n+YIfy7HlSx+aRWYWojBD/WwPLD7ZHbVaYm8Zx/1ennakVgPKJwQDx7drEzl5/Ltl\nr/v8y38rAzlkROJ8GgZbnHZ2RW8XeLaDoY6ikdrr+TiSM3/1clDWhDMa5zjVMxI3\nblDsPvNhfXBJ4W46P+OLByzyzpAajMIe62kBWbhFEQKBgQD490hH7/e55jtGYX5O\nU664v9ETVBErdyVf2YlA2iT+QDj3TLFmcF92H3GXY/DdOLQKlrRxmkP7ROJyAVcv\niELdDl6ekilq51Izy4uTR179O0mquPFGX8xJMX/QKQ25N6jj3F6TL9fQT49GM9df\nFgbR0NMi1i+2qzBnd3bfzE+CUQKBgQDi1OJvctThcp/hOaGhVzMwdti/5D8LWSEa\naxOYIfmRdaUgi3bKl4OEseRs9lEtGowjDVMIBiIfgnj7PY1/rbS8LGLDBx5EAyhY\n1EhS1BBjHSjx2ViyXKU599fLfDBw0i7w11teUm3cnRiiXk371gVYYH/TMwQaRZLQ\n8EUDAdq5NwKBgQCdEFwATipplA63ExB815w1n4WF/RYr5qmkc3d8e2K1J80IbtDI\nAIKo4aNmz70HwxsKRxMlTB4xKb72D1RyfzM3hDY7MZiBgdfBJ1sxmegaN8n8s1o7\nfHpDfr/UkeG/hJa+0aq0jo1HNLn9nvzzVtEMkwJwStGlGxCZZauP+rP6UQKBgCb5\nx3K4+4VFid1MZs5vSldwhGvsjzym8v40GejRJa3t1hLSg/XptOqPGp3ycR5b6mp3\ndqXxT9m0NI+PEwo2UdDnm4zBY1zyYfNpfofk8m/lacysuQXkz2s3f/fx/ezU4MX3\naza42THIOJxlseas7rwx0KT8ph7Rh5mpP2J15hxfAoGALG4iKCmzHv665DrNF3ge\nDWGvVOf/oFLCfrQFKXKznpcLbsURfOYeTlM3bJySY4B8UlEFQAyZzxYuzFUgEhwB\na8OguMVf+TmkkIkQlZOC1lLvu/LzTQnYJEWPfcN20NtuLVZhm59uFFqkRE4SFypv\nuYJmnc+xaFwf3Y5HjFwSAgc=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firestoresa@coba-capstone-426301.iam.gserviceaccount.com",
+  "client_id": "117042600311609682398",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firestoresa%40coba-capstone-426301.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
