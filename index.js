@@ -9,6 +9,12 @@ app.use(bodyParser.json());
 
 const PORT = process.env.PORT || 3000;
 
+// Menyesuaikan limit untuk JSON body
+app.use(express.json({ limit: '10mb' })); // Ubah sesuai kebutuhan
+
+// Menangani payload yang lebih besar
+app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Ubah sesuai kebutuhan
+
 // Routes for inventory
 app.post('/addInventory', inventoryController.addInventory);
 app.get('/getInventoryItems', inventoryController.getInventoryItems);
