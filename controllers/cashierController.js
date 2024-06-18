@@ -169,143 +169,156 @@ const checkout = async (req, res) => {
 
 const upDataTestingTransaction = async (req, res) => {
     try {
-        const { orderItems, transaction_date, transaction_time } = req.body;
+        const { transactions } = req.body;
 
-        // Validasi orderItems, transaction_date, dan transaction_time
-        if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
-            return res.status(400).send('Order items harus disertakan dan tidak boleh kosong.');
-        }
-        if (!transaction_date || !transaction_time) {
-            return res.status(400).send('Transaction date dan transaction time harus disertakan.');
+        // Validasi apakah transactions ada dan merupakan array
+        if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
+            return res.status(400).json({ error: 'Transactions harus disertakan dan tidak boleh kosong.' });
         }
 
-        // Konversi transaction_date dan transaction_time menjadi objek Date
-        const transactionDateParts = transaction_date.split('/');
-        const day = parseInt(transactionDateParts[0], 10);
-        const month = parseInt(transactionDateParts[1], 10) - 1; // Months are 0-indexed
-        const year = parseInt(transactionDateParts[2], 10);
-        const transactionTimeParts = transaction_time.split(':');
-        const hours = parseInt(transactionTimeParts[0], 10);
-        const minutes = parseInt(transactionTimeParts[1], 10);
-        const seconds = parseInt(transactionTimeParts[2], 10);
+        // Iterasi melalui setiap transaksi
+        for (const transaction of transactions) {
+            const { orderItems, transaction_date, transaction_time } = transaction;
 
-        const dateObject = new Date(year, month, day, hours, minutes, seconds);
-
-        let totalHarga = 0;
-        let inventoryUpdates = [];
-        let transactionItems = [];
-
-        // Iterasi melalui setiap item dalam orderItems
-        for (const item of orderItems) {
-            const { namaMenu, quantity } = item;
-
-            // Validasi ketersediaan menu
-            const menuSnapshot = await db.collection('menu').where('namaMenu', '==', namaMenu).get();
-
-            if (menuSnapshot.empty) {
-                return res.status(404).send(`Menu dengan nama '${namaMenu}' tidak ditemukan.`);
+            // Validasi orderItems, transaction_date, dan transaction_time
+            if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
+                return res.status(400).json({ error: 'Order items harus disertakan dan tidak boleh kosong.' });
+            }
+            if (!transaction_date || !transaction_time) {
+                return res.status(400).json({ error: 'Transaction date dan transaction time harus disertakan.' });
             }
 
-            const menuData = menuSnapshot.docs[0].data();
-            const { ingredients, harga } = menuData;
+            // Konversi transaction_date dan transaction_time menjadi objek Date
+            const transactionDateParts = transaction_date.split('/');
+            const day = parseInt(transactionDateParts[0], 10);
+            const month = parseInt(transactionDateParts[1], 10) - 1; // Months are 0-indexed
+            const year = parseInt(transactionDateParts[2], 10);
+            const transactionTimeParts = transaction_time.split(':');
+            const hours = parseInt(transactionTimeParts[0], 10);
+            const minutes = parseInt(transactionTimeParts[1], 10);
+            const seconds = parseInt(transactionTimeParts[2], 10);
 
-            // Logging untuk memastikan namaMenu ada
-            console.log(`Processing menu item: ${namaMenu}`);
+            const dateObject = new Date(year, month, day, hours, minutes, seconds);
 
-            // Validasi ketersediaan ingredients
-            for (const ingredient of ingredients) {
-                const { nama, jumlah } = ingredient;
+            let totalHarga = 0;
+            let inventoryUpdates = [];
+            let transactionItems = [];
 
-                // Periksa ketersediaan ingredient di inventory
-                const itemsSnapshot = await db.collection('barang').where('nama', '==', nama).get();
+            // Iterasi melalui setiap item dalam orderItems
+            for (const item of orderItems) {
+                const { namaMenu, quantity } = item;
 
-                if (itemsSnapshot.empty) {
-                    return res.status(400).send(`Ingredient ${nama} tidak ada di inventory.`);
+                // Validasi ketersediaan menu
+                const menuSnapshot = await db.collection('menu').where('namaMenu', '==', namaMenu).get();
+
+                if (menuSnapshot.empty) {
+                    return res.status(404).json({ error: `Menu dengan nama '${namaMenu}' tidak ditemukan.` });
                 }
 
-                const existingItem = itemsSnapshot.docs[0];
-                const ingredientId = existingItem.id; // Menggunakan ID dokumen dari Firestore
-                const existingData = existingItem.data();
-                let { jumlah: existingJumlah, riwayat } = existingData;
+                const menuData = menuSnapshot.docs[0].data();
+                const { ingredients, harga } = menuData;
 
-                // Validasi ketersediaan jumlah ingredient
-                if (existingJumlah < jumlah * quantity) {
-                    return res.status(400).send(`Jumlah ingredient ${nama} tidak mencukupi.`);
+                // Logging untuk memastikan namaMenu ada
+                console.log(`Processing menu item: ${namaMenu}`);
+
+                // Validasi ketersediaan ingredients
+                for (const ingredient of ingredients) {
+                    const { nama, jumlah } = ingredient;
+
+                    // Periksa ketersediaan ingredient di inventory
+                    const itemsSnapshot = await db.collection('barang').where('nama', '==', nama).get();
+
+                    if (itemsSnapshot.empty) {
+                        return res.status(400).json({ error: `Ingredient ${nama} tidak ada di inventory.` });
+                    }
+
+                    const existingItem = itemsSnapshot.docs[0];
+                    const ingredientId = existingItem.id; // Menggunakan ID dokumen dari Firestore
+                    const existingData = existingItem.data();
+                    let { jumlah: existingJumlah, riwayat } = existingData;
+
+                    // Validasi ketersediaan jumlah ingredient
+                    if (existingJumlah < jumlah * quantity) {
+                        return res.status(400).json({ error: `Jumlah ingredient ${nama} tidak mencukupi.` });
+                    }
+
+                    // Hitung jumlah yang harus dikurangi dari inventory
+                    const newJumlah = existingJumlah - jumlah * quantity;
+
+                    // Tambahkan data update ke dalam array
+                    if (ingredientId && newJumlah !== undefined) {
+                        inventoryUpdates.push({ id: ingredientId, newJumlah });
+
+                        // Tambahkan catatan pengurangan ke riwayat dengan timestamp
+                        const timestamp = new Date().toISOString();
+                        riwayat.push({
+                            nama: nama,
+                            jumlah: jumlah * quantity,
+                            satuan: existingData.satuan,
+                            catatan: `Dikurangi: ${jumlah * quantity} ${existingData.satuan}`,
+                            status: 0, // Status 0 untuk pengurangan
+                            timestamp: timestamp // Tambahkan timestamp di sini
+                        });
+
+                        // Update dokumen inventaris di Firestore
+                        await existingItem.ref.update({
+                            jumlah: newJumlah,
+                            riwayat: riwayat
+                        });
+                    }
                 }
 
-                // Hitung jumlah yang harus dikurangi dari inventory
-                const newJumlah = existingJumlah - jumlah * quantity;
+                // Hitung total harga transaksi
+                totalHarga += harga * quantity;
 
-                // Tambahkan data update ke dalam array
-                if (ingredientId && newJumlah !== undefined) {
-                    inventoryUpdates.push({ id: ingredientId, newJumlah });
-
-                    // Tambahkan catatan pengurangan ke riwayat dengan timestamp
-                    const timestamp = new Date().toISOString();
-                    riwayat.push({
-                        nama: nama,
-                        jumlah: jumlah * quantity,
-                        satuan: existingData.satuan,
-                        catatan: `Dikurangi: ${jumlah * quantity} ${existingData.satuan}`,
-                        status: 0, // Status 0 untuk pengurangan
-                        timestamp: timestamp // Tambahkan timestamp di sini
-                    });
-
-                    // Update dokumen inventaris di Firestore
-                    await existingItem.ref.update({
-                        jumlah: newJumlah,
-                        riwayat: riwayat
-                    });
-                }
+                // Tambahkan item ke transaksi
+                transactionItems.push({
+                    namaMenu,
+                    quantity,
+                    harga
+                });
             }
 
-            // Hitung total harga transaksi
-            totalHarga += harga * quantity;
-
-            // Tambahkan item ke transaksi
-            transactionItems.push({
-                namaMenu,
-                quantity,
-                harga
+            // Lakukan update inventory dalam batch
+            const batch = db.batch();
+            inventoryUpdates.forEach(update => {
+                const { id, newJumlah } = update;
+                const inventoryRef = db.collection('barang').doc(id);
+                batch.update(inventoryRef, { jumlah: newJumlah });
             });
+
+            // Komitkan batch update
+            await batch.commit();
+
+            // Generate transaction ID
+            const transactionId = await generateTransactionId(dateObject, dateObject);
+
+            // Simpan record transaksi ke Firestore dengan format yang sesuai
+            const transactionRecord = {
+                transaction_date: transaction_date,
+                transaction_time: transaction_time,
+                unit_price: transactionItems[0].harga, // Harga satuan produk pertama dalam transaksi
+                product_id: transactionItems[0].namaMenu, // ID produk pertama dalam transaksi
+                quantity: transactionItems[0].quantity, // Jumlah produk pertama dalam transaksi
+                line_item_amount: totalHarga, // Total harga transaksi
+                transaction_id: transactionId // ID transaksi yang dihasilkan
+            };
+
+            // Simpan transaksi ke Firestore
+            await db.collection('transactions').doc(transactionId).set(transactionRecord);
         }
 
-        // Lakukan update inventory dalam batch
-        const batch = db.batch();
-        inventoryUpdates.forEach(update => {
-            const { id, newJumlah } = update;
-            const inventoryRef = db.collection('barang').doc(id);
-            batch.update(inventoryRef, { jumlah: newJumlah });
-        });
-
-        // Komitkan batch update
-        await batch.commit();
-
-        // Generate transaction ID
-        const transactionId = await generateTransactionId(dateObject, dateObject);
-
-        // Simpan record transaksi ke Firestore dengan format yang sesuai
-        const transactionRecord = {
-            transaction_date: transaction_date,
-            transaction_time: transaction_time,
-            unit_price: transactionItems[0].harga, // Harga satuan produk pertama dalam transaksi
-            product_id: transactionItems[0].namaMenu, // ID produk pertama dalam transaksi
-            quantity: transactionItems[0].quantity, // Jumlah produk pertama dalam transaksi
-            line_item_amount: totalHarga, // Total harga transaksi
-            transaction_id: transactionId // ID transaksi yang dihasilkan
-        };
-
-        // Simpan transaksi ke Firestore
-        await db.collection('transactions').doc(transactionId).set(transactionRecord);
-
-        // Response jika checkout berhasil
-        res.status(200).json({ message: 'Checkout berhasil.', totalHarga, transactionId });
+        // Response jika checkout berhasil untuk semua transaksi
+        res.status(200).json({ message: 'Checkout berhasil untuk semua transaksi.' });
     } catch (error) {
         // Tangani error dengan respons status 500
         console.error('Error during checkout:', error);
-        res.status(500).send(error.message);
+        res.status(500).json({ error: error.message });
     }
 };
+
+
+
 
 
 
