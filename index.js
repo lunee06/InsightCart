@@ -1,19 +1,16 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const inventoryController = require('./controllers/inventoryController');
 const menuController = require('./controllers/menuController');
 const cashierController = require('./controllers/cashierController');
 
 const app = express();
-app.use(bodyParser.json());
-
 const PORT = process.env.PORT || 3000;
 
 // Menyesuaikan limit untuk JSON body
-app.use(express.json({ limit: '10mb' })); // Ubah sesuai kebutuhan
+app.use(express.json({ limit: '10mb' }));
 
 // Menangani payload yang lebih besar
-app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Ubah sesuai kebutuhan
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Routes for inventory
 app.post('/addInventory', inventoryController.addInventory);
@@ -28,14 +25,11 @@ app.put('/updateMenu', menuController.updateMenu);
 app.delete('/deleteMenu/:id', menuController.deleteMenu);
 app.post('/addMenuMultiply', menuController.addMenuMultiply);
 
-
 // Routes for cashier
 app.post('/upDataTestingTransaction', cashierController.upDataTestingTransaction);
 app.get('/print-receipt/:transactionId', cashierController.printReceipt);
 app.get('/getAllReceipts', cashierController.getAllReceipts);
 app.post('/checkout', cashierController.checkout);
-
-
 
 // Listen on the specified port
 app.listen(PORT, () => {
