@@ -169,6 +169,57 @@ const getInventoryHistory = async (req, res) => {
     }
 };
 
+// Endpoint untuk menambahkan beberapa item ke inventaris
+const addMultipleInventory = async (req, res) => {
+    try {
+        const items = req.body;
+
+        if (!Array.isArray(items)) {
+            return res.status(400).send('Data harus berupa array.');
+        }
+
+        const batch = db.batch();
+
+        items.forEach(item => {
+            const { nama, jumlah, satuan } = item;
+
+            if (!nama || !jumlah || !satuan) {
+                throw new Error('Nama, jumlah, dan satuan harus disertakan.');
+            }
+
+            if (satuan !== 'ml' && satuan !== 'g') {
+                throw new Error('Satuan hanya bisa ml atau g.');
+            }
+
+            let jumlahFormatted = parseFloat(jumlah);
+            let satuanFormatted = satuan;
+
+            const itemRef = db.collection('barang').doc();
+
+            const data = {
+                nama,
+                jumlah: jumlahFormatted,
+                satuan: satuanFormatted,
+                riwayat: [
+                    {
+                        jumlah: jumlahFormatted,
+                        satuan: satuanFormatted,
+                        catatan: `Ditambah: ${jumlahFormatted} ${satuanFormatted}`,
+                        timestamp: new Date().toISOString()  // Tambahkan timestamp ISO string
+                    }
+                ]
+            };
+
+            batch.set(itemRef, data);
+        });
+
+        await batch.commit();
+        return res.status(200).send('Barang ditambahkan.');
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+};
+
 
 
 
@@ -182,5 +233,6 @@ const getInventoryHistory = async (req, res) => {
 module.exports = {
     addInventory,
     getInventoryItems,
-    getInventoryHistory
+    getInventoryHistory,
+    addMultipleInventory
 };
