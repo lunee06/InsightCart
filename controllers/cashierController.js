@@ -1,23 +1,6 @@
 const db = require('../firebase');
 
-const getNextSequenceNumber = async () => {
-    const counterRef = db.collection('counters').doc('transaction_counter');
-    const transaction = await db.runTransaction(async (transaction) => {
-        const doc = await transaction.get(counterRef);
-        
-        if (!doc.exists) {
-            // Jika dokumen tidak ada, buat dokumen baru dengan nilai awal
-            transaction.set(counterRef, { lastNumber: 0 });
-            return 0; // Mengembalikan nilai awal
-        }
 
-        const currentNumber = doc.data().lastNumber || 0;
-        const nextNumber = currentNumber + 1;
-        transaction.update(counterRef, { lastNumber: nextNumber });
-        return nextNumber;
-    });
-    return transaction;
-};
 
 const generateTransactionId = async (transactionDate, transactionTime) => {
     try {

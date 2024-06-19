@@ -1,15 +1,17 @@
 const express = require('express');
+const swaggerUi = require('swagger-ui-express');
+const yamljs = require('yamljs');
+const fs = require('fs');
 const inventoryController = require('./controllers/inventoryController');
 const menuController = require('./controllers/menuController');
 const cashierController = require('./controllers/cashierController');
+const predictionController = require('./controllers/predictionController');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Menyesuaikan limit untuk JSON body
+// Middleware to handle JSON and URL encoded bodies
 app.use(express.json({ limit: '10mb' }));
-
-// Menangani payload yang lebih besar
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Routes for inventory
@@ -30,6 +32,13 @@ app.post('/upDataTestingTransaction', cashierController.upDataTestingTransaction
 app.get('/print-receipt/:transactionId', cashierController.printReceipt);
 app.get('/getAllReceipts', cashierController.getAllReceipts);
 app.post('/checkout', cashierController.checkout);
+
+// Routes for prediction
+app.post('/predict', predictionController.predict);
+
+// Serve Swagger documentation
+const swaggerDocument = yamljs.load('./swagger.yaml');
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Listen on the specified port
 app.listen(PORT, () => {

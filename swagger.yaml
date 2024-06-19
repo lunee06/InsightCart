@@ -1,0 +1,432 @@
+openapi: 3.0.0
+info:
+  title: InsightCart API
+  description: API untuk manajemen kafe serta analisis dan prediksi menggunakan machine learning.
+  version: 1.0.0
+
+paths:
+  /addInventory:
+    post:
+      summary: Menambahkan barang ke inventaris
+      tags:
+        - inventory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nama:
+                  type: string
+                jumlah:
+                  type: number
+                satuan:
+                  type: string
+                  enum:
+                    - ml
+                    - g
+              required:
+                - nama
+                - jumlah
+                - satuan
+      responses:
+        '200':
+          description: Barang berhasil ditambahkan atau diperbarui.
+        '400':
+          description: Request tidak valid (misalnya jika parameter tidak lengkap atau satuan tidak sesuai).
+        '500':
+          description: Terjadi kesalahan server.
+
+  /getInventoryItems:
+    get:
+      summary: Mengambil daftar barang dalam inventaris
+      tags:
+        - inventory
+      responses:
+        '200':
+          description: Daftar barang berhasil diambil.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    nama:
+                      type: string
+                    jumlah:
+                      type: number
+                    satuan:
+                      type: string
+                    riwayat:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          jumlah:
+                            type: number
+                          satuan:
+                            type: string
+                          catatan:
+                            type: string
+                          timestamp:
+                            type: string
+        '500':
+          description: Terjadi kesalahan server.
+
+  /getInventoryHistory:
+    get:
+      summary: Mengambil riwayat perubahan inventaris
+      tags:
+        - inventory
+      responses:
+        '200':
+          description: Riwayat perubahan inventaris berhasil diambil.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  history:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        nama:
+                          type: string
+                        jumlah:
+                          type: number
+                        satuan:
+                          type: string
+                        status:
+                          type: integer
+                          description: '1 untuk ditambah, 0 untuk dikurangi'
+                        timestamp:
+                          type: string
+        '500':
+          description: Terjadi kesalahan server.
+
+  /addMultipleInventory:
+    post:
+      summary: Menambahkan beberapa item ke inventaris
+      tags:
+        - inventory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  nama:
+                    type: string
+                  jumlah:
+                    type: number
+                  satuan:
+                    type: string
+                    enum:
+                      - ml
+                      - g
+              minItems: 1
+      responses:
+        '200':
+          description: Barang-barang berhasil ditambahkan.
+        '400':
+          description: Request tidak valid (misalnya jika salah satu item tidak lengkap atau satuan tidak sesuai).
+        '500':
+          description: Terjadi kesalahan server.
+
+  /addMenu:
+    post:
+      summary: Menambahkan menu baru
+      tags:
+        - menu
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                namaMenu:
+                  type: string
+                ingredients:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      nama:
+                        type: string
+                      jumlah:
+                        type: number
+                      satuan:
+                        type: string
+                        enum:
+                          - ml
+                          - g
+                  minItems: 1
+                harga:
+                  type: number
+              required:
+                - namaMenu
+                - ingredients
+                - harga
+      responses:
+        '200':
+          description: Menu berhasil ditambahkan.
+        '400':
+          description: Request tidak valid (misalnya jika parameter tidak lengkap atau ingredient tidak tersedia).
+        '500':
+          description: Terjadi kesalahan server.
+
+  /getMenuItems:
+    get:
+      summary: Mengambil daftar menu
+      tags:
+        - menu
+      responses:
+        '200':
+          description: Daftar menu berhasil diambil.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    namaMenu:
+                      type: string
+                    ingredients:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          nama:
+                            type: string
+                          jumlah:
+                            type: number
+                          satuan:
+                            type: string
+                    harga:
+                      type: number
+        '500':
+          description: Terjadi kesalahan server.
+
+  /updateMenu:
+    put:
+      summary: Memperbarui menu
+      tags:
+        - menu
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                namaMenu:
+                  type: string
+                ingredients:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      nama:
+                        type: string
+                      jumlah:
+                        type: number
+                      satuan:
+                        type: string
+                        enum:
+                          - ml
+                          - g
+                  minItems: 1
+                harga:
+                  type: number
+              required:
+                - id
+                - namaMenu
+                - ingredients
+                - harga
+      responses:
+        '200':
+          description: Menu berhasil diperbarui.
+        '400':
+          description: Request tidak valid (misalnya jika parameter tidak lengkap atau ingredient tidak tersedia).
+        '404':
+          description: Menu tidak ditemukan.
+        '500':
+          description: Terjadi kesalahan server.
+
+  /deleteMenu/{id}:
+    delete:
+      summary: Menghapus menu berdasarkan ID
+      tags:
+        - menu
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID menu yang akan dihapus
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Menu berhasil dihapus.
+        '400':
+          description: ID menu harus disertakan.
+        '404':
+          description: Menu tidak ditemukan.
+        '500':
+          description: Terjadi kesalahan server.
+
+  /addMenuMultiply:
+    post:
+      summary: Menambahkan beberapa menu sekaligus
+      tags:
+        - menu
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  namaMenu:
+                    type: string
+                  ingredients:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        nama:
+                          type: string
+                        jumlah:
+                          type: number
+                        satuan:
+                          type: string
+                          enum:
+                            - ml
+                            - g
+                    minItems: 1
+                  harga:
+                    type: number
+              minItems: 1
+      responses:
+        '200':
+          description: Menambahkan menu-menu berhasil.
+        '400':
+          description: Request tidak valid (misalnya jika salah satu menu tidak lengkap atau ingredient tidak tersedia).
+        '500':
+          description: Terjadi kesalahan server.
+
+  /checkout:
+    post:
+      summary: Checkout order items
+      tags:
+        - transactions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderItems:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      namaMenu:
+                        type: string
+                      quantity:
+                        type: integer
+      responses:
+        '200':
+          description: Checkout berhasil
+        '400':
+          description: Request body invalid
+        '500':
+          description: Internal server error
+
+  /upDataTestingTransaction:
+    post:
+      summary: Add testing transactions
+      tags:
+        - transactions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transactions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      orderItems:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            namaMenu:
+                              type: string
+                            quantity:
+                              type: integer
+                      transaction_date:
+                        type: string
+                      transaction_time:
+                        type: string
+      responses:
+        '200':
+          description: Checkout berhasil untuk semua transaksi
+        '400':
+          description: Request body invalid
+        '500':
+          description: Internal server error
+
+  /printReceipt/{transactionId}:
+    get:
+      summary: Print receipt for a specific transaction
+      tags:
+        - transactions
+      parameters:
+        - in: path
+          name: transactionId
+          required: true
+          schema:
+            type: string
+          description: The transaction ID
+      responses:
+        '200':
+          description: Nota
+        '400':
+          description: Request parameter invalid
+        '404':
+          description: Transaksi tidak ditemukan
+        '500':
+          description: Internal server error
+
+  /getAllReceipts:
+    get:
+      summary: Retrieve all receipts
+      tags:
+        - transactions
+      responses:
+        '200':
+          description: Daftar semua nota
+        '500':
+          description: Internal server error
