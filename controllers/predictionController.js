@@ -1,6 +1,6 @@
 // controllers/predictionController.js
 
-// const tf = require('@tensorflow/tfjs-node');
+//const tf = require('@tensorflow/tfjs-node');
 
 // Fungsi untuk memuat model dari file .h5
 const loadModel = async () => {

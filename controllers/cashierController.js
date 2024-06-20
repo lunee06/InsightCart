@@ -326,14 +326,28 @@ const printReceipt = async (req, res) => {
         // Ubah format tanggal
         const transactionDate = new Date(transactionData.transaction_date);
         const formattedDate = `${transactionDate.getDate()}/${transactionDate.getMonth() + 1}/${transactionDate.getFullYear()}`;
-        const formattedTime = `${transactionDate.getHours()}:${transactionDate.getMinutes()}:${transactionDate.getSeconds()}`;
+
+        // Ubah format waktu jika transaction_time ada
+        let formattedTime = "0:0:0"; // Default jika transaction_time tidak ada
+        if (transactionData.transaction_time) {
+            const timeComponents = transactionData.transaction_time.split(':');
+            formattedTime = `${timeComponents[0]}:${timeComponents[1]}:${timeComponents[2]}`;
+        }
+
+        // Persiapan item sesuai format yang diharapkan
+        const items = [{
+            namaMenu: transactionData.product_id,
+            jumlah: transactionData.quantity,
+            harga: transactionData.line_item_amount
+        }];
 
         // Cetak nota
         const nota = {
-            tanggal: `${formattedDate} ${formattedTime}`, // Menggunakan format tanggal dan waktu yang sesuai
+            tanggal: formattedDate,
+            waktu: formattedTime,
             idTransaksi: transactionData.transaction_id,
-            items: transactionData.quantity, // Karena hanya ada satu produk dalam transaksi
-            grandTotal: transactionData.line_item_amount // Menggunakan total harga dari transaksi
+            items: items,
+            grandTotal: transactionData.line_item_amount
         };
 
         // Response dengan nota
@@ -344,6 +358,9 @@ const printReceipt = async (req, res) => {
         res.status(500).send(error.message);
     }
 };
+
+
+
 
 const getAllReceipts = async (req, res) => {
     try {
