@@ -1,5 +1,5 @@
 const db = require('../firebase');
-//asdaswjea
+
 
 
 const generateTransactionId = async (transactionDate, transactionTime) => {
@@ -30,7 +30,7 @@ const checkout = async (req, res) => {
 
         // Validasi orderItems
         if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
-            return res.status(400).send('Order items harus disertakan dan tidak boleh kosong.');
+            return res.status(400).json({ error: 'Order items harus disertakan dan tidak boleh kosong.' });
         }
 
         let totalHarga = 0;
@@ -46,7 +46,7 @@ const checkout = async (req, res) => {
             const menuSnapshot = await db.collection('menu').where('namaMenu', '==', namaMenu).get();
 
             if (menuSnapshot.empty) {
-                return res.status(404).send(`Menu dengan nama '${namaMenu}' tidak ditemukan.`);
+                return res.status(404).json({ error: `Menu dengan nama '${namaMenu}' tidak ditemukan.` });
             }
 
             const menuData = menuSnapshot.docs[0].data();
@@ -63,7 +63,7 @@ const checkout = async (req, res) => {
                 const itemsSnapshot = await db.collection('barang').where('nama', '==', nama).get();
 
                 if (itemsSnapshot.empty) {
-                    return res.status(400).send(`Ingredient ${nama} tidak ada di inventory.`);
+                    return res.status(400).json({ error: `Ingredient ${nama} tidak ada di inventory.` });
                 }
 
                 const existingItem = itemsSnapshot.docs[0];
@@ -73,7 +73,7 @@ const checkout = async (req, res) => {
 
                 // Validasi ketersediaan jumlah ingredient
                 if (existingJumlah < jumlah * quantity) {
-                    return res.status(400).send(`Jumlah ingredient ${nama} tidak mencukupi.`);
+                    return res.status(400).json({ error: `Jumlah ingredient ${nama} tidak mencukupi.` });
                 }
 
                 // Hitung jumlah yang harus dikurangi dari inventory
@@ -102,15 +102,18 @@ const checkout = async (req, res) => {
                 }
             }
 
-            // Hitung total harga transaksi
-            totalHarga += harga * quantity;
+            // Hitung total harga transaksi untuk item saat ini
+            const itemTotal = harga * quantity;
 
             // Tambahkan item ke transaksi
             transactionItems.push({
                 namaMenu,
                 quantity,
-                harga
+                harga: itemTotal // Harga total untuk item ini
             });
+
+            // Akumulasikan total harga transaksi
+            totalHarga += itemTotal;
         }
 
         // Lakukan update inventory dalam batch
@@ -131,9 +134,7 @@ const checkout = async (req, res) => {
         const transactionRecord = {
             transaction_date: transactionDate.toLocaleDateString(), // Gunakan tanggal saat ini
             transaction_time: transactionDate.toLocaleTimeString(), // Gunakan waktu saat ini
-            unit_price: transactionItems[0].harga, // Harga satuan produk pertama dalam transaksi
-            product_id: transactionItems[0].namaMenu, // ID produk pertama dalam transaksi
-            quantity: transactionItems[0].quantity, // Jumlah produk pertama dalam transaksi
+            orderItems: transactionItems, // Simpan semua item dalam orderItems
             line_item_amount: totalHarga, // Total harga transaksi
             transaction_id: transactionId // ID transaksi yang dihasilkan
         };
@@ -142,13 +143,22 @@ const checkout = async (req, res) => {
         await db.collection('transactions').doc(transactionId).set(transactionRecord);
 
         // Response jika checkout berhasil
-        res.status(200).json({ message: 'Checkout berhasil.', totalHarga, transactionId });
+        res.status(200).json({
+            tanggal: `${transactionDate.getDate()}/${transactionDate.getMonth() + 1}/${transactionDate.getFullYear()}`,
+            waktu: `${transactionDate.getHours()}.${transactionDate.getMinutes()}.${transactionDate.getSeconds()}`,
+            idTransaksi: transactionId,
+            items: transactionItems,
+            grandTotal: totalHarga
+        });
     } catch (error) {
         // Tangani error dengan respons status 500
         console.error('Error during checkout:', error);
-        res.status(500).send(error.message);
+        res.status(500).json({ error: error.message });
     }
 };
+
+
+
 
 const upDataTestingTransaction = async (req, res) => {
     try {
@@ -323,23 +333,40 @@ const printReceipt = async (req, res) => {
 
         const transactionData = transactionSnapshot.data();
 
-        // Ubah format tanggal
-        const transactionDate = new Date(transactionData.transaction_date);
-        const formattedDate = `${transactionDate.getDate()}/${transactionDate.getMonth() + 1}/${transactionDate.getFullYear()}`;
+        // Ambil transaction_date dari data transaksi
+        const transactionDate = transactionData.transaction_date;
 
-        // Ubah format waktu jika transaction_time ada
-        let formattedTime = "0:0:0"; // Default jika transaction_time tidak ada
-        if (transactionData.transaction_time) {
-            const timeComponents = transactionData.transaction_time.split(':');
-            formattedTime = `${timeComponents[0]}:${timeComponents[1]}:${timeComponents[2]}`;
+        // Validasi transaction_date
+        if (!transactionDate) {
+            return res.status(400).send('Data transaksi tidak memiliki transaction_date.');
         }
 
-        // Persiapan item sesuai format yang diharapkan
-        const items = [{
-            namaMenu: transactionData.product_id,
-            jumlah: transactionData.quantity,
-            harga: transactionData.line_item_amount
-        }];
+        // Ubah format tanggal
+        const dateParts = transactionDate.split('/');
+        const formattedDate = `${dateParts[0].padStart(2, '0')}/${dateParts[1].padStart(2, '0')}/${dateParts[2]}`;
+
+        // Ambil transaction_time dari data transaksi
+        let formattedTime = "0:0:0"; // Default jika transaction_time tidak ada
+        if (transactionData.transaction_time) {
+            const timeComponents = transactionData.transaction_time.split('.');
+            if (timeComponents.length === 3) {
+                formattedTime = `${timeComponents[0].padStart(2, '0')}:${timeComponents[1].padStart(2, '0')}:${timeComponents[2].padStart(2, '0')}`;
+            } else {
+                console.warn(`Format waktu tidak sesuai: ${transactionData.transaction_time}`);
+            }
+        } else {
+            console.warn(`Data transaksi dengan ID ${transactionId} tidak memiliki transaction_time.`);
+        }
+
+        // Persiapan items sesuai format yang diharapkan
+        const items = transactionData.orderItems.map(item => ({
+            namaMenu: item.namaMenu,
+            jumlah: item.quantity,
+            harga: item.harga
+        }));
+
+        // Hitung grandTotal dari semua item
+        const grandTotal = items.reduce((total, item) => total + (item.harga * item.jumlah), 0);
 
         // Cetak nota
         const nota = {
@@ -347,7 +374,7 @@ const printReceipt = async (req, res) => {
             waktu: formattedTime,
             idTransaksi: transactionData.transaction_id,
             items: items,
-            grandTotal: transactionData.line_item_amount
+            grandTotal: grandTotal
         };
 
         // Response dengan nota
@@ -358,6 +385,13 @@ const printReceipt = async (req, res) => {
         res.status(500).send(error.message);
     }
 };
+
+
+
+
+
+
+
 
 
 
